@@ -496,6 +496,8 @@ const ShareManager = {
             }
         });
         
+        grid += '\nchttps://caddiedle.beusts.me/';
+        
         return grid.trim();
     },
     
