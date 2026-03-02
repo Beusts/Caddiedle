@@ -1,0 +1,7 @@
+/.github
+/.venv
+/cache_prices.parquet
+/cache_products.parquet
+/main.py
+/nul
+/requirements.txt

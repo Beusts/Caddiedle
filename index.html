@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Devinez le prix du produit du jour ! Un jeu de devinette quotidien basé sur les prix réels.">
+    <meta name="theme-color" content="#6aaa64">
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <title>Caddiedle - Devinez le prix du jour</title>
+</head>
+<body>
+    <noscript>
+        <p style="text-align:center;padding:2rem;font-family:sans-serif;">
+            Caddiedle nécessite JavaScript pour fonctionner. Veuillez l'activer dans votre navigateur.
+        </p>
+    </noscript>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button id="tutorialBtn" class="icon-btn" aria-label="Aide et règles du jeu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </button>
+        </div>
+        <h1 class="title">Caddiedle</h1>
+        <div class="header-right">
+            <button id="statsBtn" class="icon-btn" aria-label="Voir les statistiques">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+            </button>
+            <button id="darkModeBtn" class="icon-btn" aria-label="Basculer le mode sombre">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="game-container" role="main">
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn mode-btn-active" id="dailyBtn">Daily Guess</button>
+            <button class="mode-btn" id="practiceBtn">Practice</button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state" aria-live="polite">
+            <div class="spinner"></div>
+            <p>Chargement du produit du jour...</p>
+        </div>
+
+        <!-- Game Content -->
+        <div id="gameContent" class="game-content" style="display: none;">
+            <!-- Product Info -->
+            <section class="product-section">
+                <div class="product-image-container">
+                    <img id="productImage" alt="Image du produit à deviner" loading="lazy" class="product-image">
+                </div>
+                <h2 id="productName" class="product-name"></h2>
+                <p id="productLocation" class="product-location"></p>
+                <p id="date" class="product-date"></p>
+            </section>
+
+            <!-- Attempts Counter / Victory / Defeat -->
+            <div class="attempts-counter" id="attemptsCounter" aria-live="polite">
+                <span id="attemptsText">Guess: <span id="currentAttempt">0</span>/6</span>
+            </div>
+
+            <!-- Victory Inline -->
+            <div class="victory-inline" id="victoryInline" style="display: none;" aria-live="polite">
+                <p class="victory-inline-title">Bravo ! 🎉</p>
+                <p class="victory-inline-price">Le prix était <strong id="victoryPriceInline"></strong> €</p>
+            </div>
+
+            <!-- Defeat Inline -->
+            <div class="defeat-inline" id="defeatInline" style="display: none;" aria-live="polite">
+                <p class="defeat-inline-title">Dommage !</p>
+                <p class="defeat-inline-price">Le prix était <strong id="correctPriceInline"></strong> €</p>
+            </div>
+
+            <!-- Guesses History -->
+            <section class="guesses-section" aria-label="Historique des tentatives">
+                <div id="guess-1" class="guess-container" aria-live="polite"></div>
+                <div id="guess-2" class="guess-container" aria-live="polite"></div>
+                <div id="guess-3" class="guess-container" aria-live="polite"></div>
+                <div id="guess-4" class="guess-container" aria-live="polite"></div>
+                <div id="guess-5" class="guess-container" aria-live="polite"></div>
+                <div id="guess-6" class="guess-container" aria-live="polite"></div>
+            </section>
+
+            <!-- Input Section -->
+            <section class="input-section" id="inputSection">
+                <label for="inputField" class="visually-hidden">Entrez votre estimation du prix en euros</label>
+                <div class="input-group" id="inputGroup">
+                    <input 
+                        type="number" 
+                        id="inputField" 
+                        placeholder="Entrez un prix (€)" 
+                        aria-label="Prix estimé en euros"
+                        min="0"
+                        max="10000"
+                        step="0.01"
+                        autocomplete="off"
+                    >
+                    <button id="submitBtn" class="submit-btn" aria-label="Valider votre estimation">
+                        <span>SUBMIT</span>
+                    </button>
+                </div>
+                <div class="share-group" id="shareGroup" style="display: none;">
+                    <button class="share-btn" id="shareBtn">Partager ⇨</button>
+                    <button class="new-product-btn" id="newProductBtn" style="display: none;">Nouveau produit ↺</button>
+                </div>
+                <p class="input-hint">Appuyez sur Entrée ou cliquez sur Valider</p>
+            </section>
+        </div>
+    </main>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal" role="dialog" aria-labelledby="tutorialTitle" aria-modal="true" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Fermer">×</button>
+            <h2 id="tutorialTitle" class="modal-title">Comment jouer</h2>
+            <div class="tutorial-content">
+                <p>Devinez le prix du produit en <strong>6 essais maximum</strong>.</p>
+                <div class="tutorial-examples">
+                    <div class="tutorial-example">
+                        <div class="guess-container tutorial-guess" style="color: var(--color-incorrect);">2.50 € - ↑</div>
+                        <p>Votre estimation est <strong>trop basse</strong></p>
+                    </div>
+                    <div class="tutorial-example">
+                        <div class="guess-container tutorial-guess" style="color: var(--color-incorrect);">5.99 € - ↓</div>
+                        <p>Votre estimation est <strong>trop haute</strong></p>
+                    </div>
+                    <div class="tutorial-example">
+                        <div class="guess-container tutorial-guess" style="color: var(--color-hint);">3.20 € - ↑</div>
+                        <p>Vous êtes <strong>proche</strong> ! (moins de 25% d'écart)</p>
+                    </div>
+                    <div class="tutorial-example">
+                        <div class="guess-container tutorial-guess" style="color: var(--color-correct);">3.49 € - ✓ Correct!</div>
+                        <p><strong>Bravo !</strong> Vous avez trouvé le prix exact</p>
+                    </div>
+                </div>
+                <p class="tutorial-note">Un nouveau produit chaque jour à minuit !</p>
+                <p class="tutorial-note">Inspiré de <a href="https://costcodle.com/" target="_blank" rel="noopener noreferrer">Costcodle</a></p>
+                <p class="tutorial-note">Code source disponible sur <a href="https://github.com/Beusts/Caddiedle" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+                <button class="primary-btn" id="closeTutorialBtn">J'ai compris</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="modal" role="dialog" aria-labelledby="victoryTitle" aria-modal="true" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content victory-modal">
+            <button class="modal-close" aria-label="Fermer">×</button>
+            <div class="confetti-container" id="confettiContainer"></div>
+            <h2 id="victoryTitle" class="modal-title">Bravo !</h2>
+            <p class="victory-message">Vous avez trouvé le prix en <strong id="victoryAttempts"></strong> tentative(s) !</p>
+            <p class="victory-price">Le prix était <strong id="victoryPrice"></strong> €</p>
+            <div class="modal-actions">
+                <button class="primary-btn" id="shareBtnVictory">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    Partager
+                </button>
+                <button class="secondary-btn" id="viewStatsFromVictory">Voir les statistiques</button>
+            </div>
+            <div class="countdown-section">
+                <p class="countdown-label">Prochain produit dans</p>
+                <p class="countdown-timer" id="countdownTimer"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Defeat Modal -->
+    <div id="defeatModal" class="modal" role="dialog" aria-labelledby="defeatTitle" aria-modal="true" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content defeat-modal">
+            <button class="modal-close" aria-label="Fermer">×</button>
+            <h2 id="defeatTitle" class="modal-title">Dommage !</h2>
+            <p class="defeat-message">Le prix était <strong id="correctPrice"></strong> €</p>
+            <p class="defeat-encouragement">Revenez demain pour un nouveau défi !</p>
+            <div class="modal-actions">
+                <button class="primary-btn" id="shareDefeatBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    Partager quand même
+                </button>
+                <button class="secondary-btn" id="viewStatsFromDefeat">Voir les statistiques</button>
+            </div>
+            <div class="countdown-section">
+                <p class="countdown-label">Prochain produit dans</p>
+                <p class="countdown-timer" id="countdownTimerDefeat"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="statsModal" class="modal" role="dialog" aria-labelledby="statsTitle" aria-modal="true" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content stats-modal">
+            <button class="modal-close" aria-label="Fermer">×</button>
+            <h2 id="statsTitle" class="modal-title">Statistiques</h2>
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <div class="stat-value" id="gamesPlayed">0</div>
+                    <div class="stat-label">Parties</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="winRate">0</div>
+                    <div class="stat-label">% Victoires</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="currentStreak">0</div>
+                    <div class="stat-label">Série actuelle</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="maxStreak">0</div>
+                    <div class="stat-label">Meilleure série</div>
+                </div>
+            </div>
+            <h3 class="distribution-title">Distribution des tentatives</h3>
+            <div class="guess-distribution" id="guessDistribution">
+                <div class="distribution-row">
+                    <div class="distribution-label">1</div>
+                    <div class="distribution-bar-container">
+                        <div class="distribution-bar" data-attempt="1" style="width: 0%;">
+                            <span class="distribution-count">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="distribution-row">
+                    <div class="distribution-label">2</div>
+                    <div class="distribution-bar-container">
+                        <div class="distribution-bar" data-attempt="2" style="width: 0%;">
+                            <span class="distribution-count">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="distribution-row">
+                    <div class="distribution-label">3</div>
+                    <div class="distribution-bar-container">
+                        <div class="distribution-bar" data-attempt="3" style="width: 0%;">
+                            <span class="distribution-count">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="distribution-row">
+                    <div class="distribution-label">4</div>
+                    <div class="distribution-bar-container">
+                        <div class="distribution-bar" data-attempt="4" style="width: 0%;">
+                            <span class="distribution-count">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="distribution-row">
+                    <div class="distribution-label">5</div>
+                    <div class="distribution-bar-container">
+                        <div class="distribution-bar" data-attempt="5" style="width: 0%;">
+                            <span class="distribution-count">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="distribution-row">
+                    <div class="distribution-label">6</div>
+                    <div class="distribution-bar-container">
+                        <div class="distribution-bar" data-attempt="6" style="width: 0%;">
+                            <span class="distribution-count">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="distribution-row">
+                    <div class="distribution-label">X</div>
+                    <div class="distribution-bar-container">
+                        <div class="distribution-bar fail-bar" data-attempt="fail" style="width: 0%;">
+                            <span class="distribution-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="primary-btn" id="closeStatsBtn">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive" style="display: none;">
+        <span id="toastMessage"></span>
+    </div>
+</body>
+</html>
