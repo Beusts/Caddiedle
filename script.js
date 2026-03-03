@@ -738,6 +738,8 @@ const Game = {
                             document.getElementById('defeatInline').style.display = 'flex';
                         }
                         document.getElementById('shareGroup').style.display = 'flex';
+                        document.getElementById('newProductBtn').style.display = 'none';
+                        document.getElementById('shareBtn').style.display = 'inline-flex';
                     }
                 }
             } else {
@@ -769,6 +771,8 @@ const Game = {
                             document.getElementById('defeatInline').style.display = 'flex';
                         }
                         document.getElementById('shareGroup').style.display = 'flex';
+                        document.getElementById('newProductBtn').style.display = 'inline-flex';
+                        document.getElementById('shareBtn').style.display = 'none';
                     }
                 }
             } else {
